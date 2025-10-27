@@ -47,6 +47,7 @@ class PPOAgent:
         self.optimizer = AdaptiveOptimizer(base_optimizer)
         self.ppo_config = ppo_config
         self.temperature = max(1e-3, float(self.agent_config.temperature))
+        self.gamma = memory_config.gamma
 
     def compute_advantages(
         self,
@@ -135,6 +136,9 @@ class PPOAgent:
                 + 0.01 * uncertainty_penalty
                 + 0.05 * (skill_alignment_loss + world_consistency_loss)
                 + 0.02 * evolution_regulariser
+                + 0.05 * nn.functional.mse_loss(diagnostics["dynamics"], batch.observations.to(self.device))
+                + 0.02 * nn.functional.mse_loss(diagnostics["meta_value"], returns.unsqueeze(-1))
+                + 0.01 * nn.functional.mse_loss(diagnostics["behaviour_prior"], advantage_logits.detach())
             )
             self.optimizer.zero_grad()
             loss.backward()
@@ -150,6 +154,15 @@ class PPOAgent:
             "skill_alignment_loss": skill_alignment_loss.item(),
             "world_consistency_loss": world_consistency_loss.item(),
             "evolution_regulariser": evolution_regulariser.item(),
+            "dynamics_consistency": nn.functional.mse_loss(
+                diagnostics["dynamics"], batch.observations.to(self.device)
+            ).item(),
+            "meta_value_alignment": nn.functional.mse_loss(
+                diagnostics["meta_value"], returns.unsqueeze(-1)
+            ).item(),
+            "behaviour_prior_alignment": nn.functional.mse_loss(
+                diagnostics["behaviour_prior"], advantage_logits.detach()
+            ).item(),
         }
 
 

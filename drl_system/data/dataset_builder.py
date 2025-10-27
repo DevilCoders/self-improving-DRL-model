@@ -107,6 +107,7 @@ class SyntheticDatasetBuilder:
             "audio_language": self._build_audio_language_dataset,
             "pdf_knowledge": self._build_pdf_dataset,
             "code_corpus": self._build_code_dataset,
+            "robotics_controls": self._build_robotics_dataset,
         }
 
     def _build_structured_text_dataset(self, dataset_root: Path, spec: DatasetSpec) -> None:
@@ -350,6 +351,41 @@ class SyntheticDatasetBuilder:
             for language, (filename, _) in languages.items()
         ]
         (dataset_root / "snippets.json").write_text(json.dumps(snippets, indent=2))
+
+    def _build_robotics_dataset(self, dataset_root: Path, spec: DatasetSpec) -> None:
+        fieldnames = [
+            "trajectory_id",
+            "ros_topic",
+            "actuator",
+            "target_position",
+            "velocity_limit",
+            "safety_margin",
+        ]
+        rows = []
+        for idx in range(spec.samples):
+            ros_topic = random.choice(["/arm/joint_states", "/base/velocity", "/gripper/command"])
+            actuator = random.choice(["shoulder_pan", "shoulder_lift", "wrist_roll", "wheel", "gripper"])
+            target_position = round(random.uniform(-1.0, 1.0), 3)
+            velocity_limit = round(random.uniform(0.1, 1.5), 3)
+            safety_margin = round(random.uniform(0.01, 0.2), 3)
+            rows.append(
+                {
+                    "trajectory_id": f"traj-{idx:04d}",
+                    "ros_topic": ros_topic,
+                    "actuator": actuator,
+                    "target_position": target_position,
+                    "velocity_limit": velocity_limit,
+                    "safety_margin": safety_margin,
+                }
+            )
+
+        if "csv" in spec.formats:
+            with (dataset_root / "trajectories.csv").open("w", newline="") as fh:
+                writer = csv.DictWriter(fh, fieldnames=fieldnames)
+                writer.writeheader()
+                writer.writerows(rows)
+        if "json" in spec.formats:
+            (dataset_root / "ros_topics.json").write_text(json.dumps(rows, indent=2))
 
 
 __all__ = ["SyntheticDatasetBuilder"]

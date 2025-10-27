@@ -17,6 +17,27 @@ def test_agent_factory_creates_sac():
     assert agent.__class__.__name__ == "SACAgent"
 
 
+def test_agent_factory_creates_dqn():
+    config = SystemConfig()
+    config.agent.type = "dqn"
+    agent = create_agent(config.agent, config, obs_dim=4, action_dim=4, device=torch.device("cpu"))
+    assert agent.__class__.__name__ == "DQNAgent"
+
+
+def test_agent_factory_creates_ddpg():
+    config = SystemConfig()
+    config.agent.type = "ddpg"
+    agent = create_agent(config.agent, config, obs_dim=4, action_dim=4, device=torch.device("cpu"))
+    assert agent.__class__.__name__ == "DDPGAgent"
+
+
+def test_agent_factory_creates_td3():
+    config = SystemConfig()
+    config.agent.type = "td3"
+    agent = create_agent(config.agent, config, obs_dim=4, action_dim=4, device=torch.device("cpu"))
+    assert agent.__class__.__name__ == "TD3Agent"
+
+
 def test_agent_prepare_batch_shapes():
     config = SystemConfig()
     agent = create_agent(config.agent, config, obs_dim=3, action_dim=3, device=torch.device("cpu"))

@@ -74,6 +74,15 @@ def default_dataset_specs() -> List["DatasetSpec"]:
             description="Polyglot programming snippets for grounded reasoning and tool use.",
             tags=["python", "c++", "javascript", "programming"],
         ),
+        DatasetSpec(
+            name="robotics_controls",
+            category="robotics_controls",
+            modality="control",
+            formats=["json", "csv"],
+            samples=36,
+            description="Synthetic robotics trajectories with ROS topic metadata and actuator bounds.",
+            tags=["ros", "robotics", "safety"],
+        ),
     ]
 
 
@@ -101,12 +110,16 @@ class AgentConfig:
     hidden_sizes: List[int] = field(default_factory=default_network_hidden_sizes)
     transformer_layers: int = 1
     hierarchy_levels: int = 2
-    ensemble: List[str] = field(default_factory=lambda: ["ppo", "a3c", "sac"])
+    ensemble: List[str] = field(default_factory=lambda: ["ppo", "a3c", "sac", "dqn", "ddpg", "td3"])
     sync_factor: float = 0.9
     n_step: int = 5
     temperature: float = 1.0
     sac_alpha: float = 0.2
     soft_update_tau: float = 0.01
+    double_q: bool = True
+    ddpg_noise: float = 0.2
+    td3_noise: float = 0.1
+    policy_delay: int = 2
 
 
 @dataclass

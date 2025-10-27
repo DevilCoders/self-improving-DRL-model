@@ -19,8 +19,9 @@ representations.
 5. **Reflection Head** – Generates self-assessment vectors for meta-learning and
    safe exploration heuristics.
 
-These components feed the policy, value, advantage, and evolution heads, so all
-agents—PPO, A3C, SAC, or custom—benefit without additional wiring.
+These components feed the policy, value, advantage, evolution, dynamics, and
+twin-Q heads, so all agents—PPO, A3C, SAC, DQN, DDPG, TD3, or custom—benefit
+without additional wiring.
 
 ## Diagnostics
 
@@ -31,6 +32,10 @@ signals in the diagnostics map:
 - `hierarchy_context`: Aggregated transformer output.
 - `hierarchy_trace`: Full tensor of per-level representations (levels × dim).
 - `reflection`: Self-assessment vector used by self-improvement routines.
+- `dynamics`: Predicted observation deltas used for model-based rollouts.
+- `q_values` / `twin_q_values`: Distributional Q estimates powering DQN/DDPG/TD3.
+- `meta_value`: Meta-critic output guiding curriculum schedulers.
+- `behaviour_prior`: Behaviour cloning prior for safety filters and RLHF alignment.
 
 ```python
 import torch

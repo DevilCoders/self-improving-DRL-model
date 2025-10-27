@@ -95,11 +95,11 @@ class Trainer:
             next_obs = self.env_factory()  # placeholder for real environment interaction
             reward = float(np.random.randn())
             done = bool(np.random.rand() < 0.05)
-            transitions.append(
-                Transition(
-                    state=obs,
-                    action=filtered_action,
-                    reward=reward,
+                transitions.append(
+                    Transition(
+                        state=obs,
+                        action=filtered_action,
+                        reward=reward,
                     next_state=next_obs,
                     done=done,
                     info={
@@ -112,6 +112,16 @@ class Trainer:
                             np.abs(extras["world_prediction"].detach().cpu().numpy() - obs).mean()
                         ),
                         "evolution": float(extras["evolution"].mean().item()),
+                        "q_value": float(extras["q_values"].mean().item()),
+                        "twin_q_value": float(extras["twin_q_values"].mean().item()),
+                        "meta_value": float(extras["meta_value"].mean().item()),
+                        "behaviour_prior": float(extras["behaviour_prior"].mean().item()),
+                        "dynamics_error": float(
+                            np.abs(
+                                extras["dynamics"].detach().cpu().numpy()
+                                - (next_obs - obs)
+                            ).mean()
+                        ),
                     },
                 )
             )
@@ -166,6 +176,21 @@ class Trainer:
                         ),
                         "evolution": float(diagnostics["evolution"][idx].mean().item()),
                         "mode": "distributed" if distributed else "parallel",
+                        "q_value": float(diagnostics["q_values"][idx].mean().item()),
+                        "twin_q_value": float(diagnostics["twin_q_values"][idx].mean().item()),
+                        "meta_value": float(diagnostics["meta_value"][idx].mean().item()),
+                        "behaviour_prior": float(diagnostics["behaviour_prior"][idx].mean().item()),
+                        "dynamics_error": float(
+                            torch.abs(
+                                diagnostics["dynamics"][idx].detach().cpu()
+                                - (
+                                    torch.from_numpy(next_obs).float()
+                                    - torch.from_numpy(observations[idx]).float()
+                                )
+                            )
+                            .mean()
+                            .item()
+                        ),
                     },
                 )
                 )

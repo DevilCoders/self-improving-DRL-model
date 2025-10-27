@@ -5,8 +5,8 @@ core architectural principles, and how the Python and C++ components cooperate.
 
 ## Architecture Highlights
 
-- **Adaptive Agent Stack** – A switchable PPO/A3C/SAC portfolio enhanced with
-  auxiliary advantage, uncertainty, and predictive-coding heads allows the
+- **Adaptive Agent Stack** – A switchable PPO/A3C/SAC/DQN/DDPG/TD3 portfolio enhanced with
+  auxiliary advantage, uncertainty, twin-Q, and predictive-coding heads allows the
   policy to quantify its confidence and learn richer representations for
   meta-learning loops.
 - **Self-Improvement Loop** – The `SelfImprovementLoop` records rolling metrics, evaluation
@@ -25,7 +25,7 @@ core architectural principles, and how the Python and C++ components cooperate.
 
 | Module | Responsibility |
 | --- | --- |
-| `drl_system.agents` | Actor-critic networks, PPO/A3C/SAC agents, and the agent factory. |
+| `drl_system.agents` | Actor-critic networks, PPO/A3C/SAC/DQN/DDPG/TD3 agents, and the agent factory. |
 | `drl_system.training` | Multi-mode trainer, RLHF feedback buffers, and evaluation loops. |
 | `drl_system.memory` | Replay buffer, episodic memory, and transition schemas. |
 | `drl_system.data` | Synthetic dataset generation, chunking, and iterators. |

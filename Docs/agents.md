@@ -14,6 +14,9 @@ Set `SystemConfig.agent.type` to select an agent:
 | `ppo` | Baseline proximal policy optimisation with adaptive auxiliary heads. | Stable policy-gradient experiments, curriculum learning. |
 | `a3c` | Asynchronous Advantage Actor-Critic with configurable n-step returns and global weight synchronisation. | Multi-threaded rollouts, low-latency robotics control. |
 | `sac` | Discrete-friendly Soft Actor-Critic variant with twin critics and temperature scaling. | High-entropy exploration, hybrid continuous/discrete tasks. |
+| `dqn` | Distributional DQN with twin critics, double-Q selection, and soft target updates. | Discrete automation, safety-critical command execution. |
+| `ddpg` | Deterministic policy gradients layered on the shared backbone with decaying exploration noise. | Robotic manipulation, ROS-integrated control loops. |
+| `td3` | Twin-delayed deterministic policy gradients with critic-gap monitoring. | High-precision control requiring conservative updates. |
 
 Key knobs live inside `SystemConfig.agent`:
 
@@ -22,7 +25,10 @@ Key knobs live inside `SystemConfig.agent`:
   representation stack baked into the shared actor-critic.
 - `n_step`: Number of steps used by A3C style advantage calculations.
 - `temperature`: Softmax temperature applied to all policies.
-- `sac_alpha` / `soft_update_tau`: Temperature and target blend for SAC.
+- `sac_alpha` / `soft_update_tau`: Temperature and target blend for SAC and off-policy agents.
+- `double_q`: Toggle double Q-learning for DQN/DDPG/TD3.
+- `ddpg_noise` / `td3_noise`: Exploration noise magnitudes for deterministic agents.
+- `policy_delay`: Update cadence for TD3 actors.
 
 ```python
 import numpy as np

@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 
 np = pytest.importorskip("numpy")
+pytest.importorskip("PIL")
 
 from drl_system.config import DatasetConfig
 from drl_system.data.dataset_builder import SyntheticDatasetBuilder
@@ -60,3 +61,7 @@ def test_multimodal_datasets_materialised(tmp_path: Path):
     code = multimodal_root / "code_corpus"
     assert (code / "python" / "analysis_agent.py").exists()
     assert (code / "cpp" / "control_loop.cpp").exists()
+    # Robotics dataset contains control traces
+    robotics = multimodal_root / "robotics_controls"
+    assert (robotics / "trajectories.csv").exists()
+    assert (robotics / "ros_topics.json").exists()

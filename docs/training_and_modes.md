@@ -27,6 +27,12 @@ Different agents shine in different modes:
   rollouts while keeping the trainer API unchanged.
 - **SAC** – Combine with `online` exploration windows to encourage higher
   entropy policies during discovery phases.
+- **DQN** – Excellent for discrete automation in `offline` or hybrid schedules where
+  dataset chunks bootstrap the replay buffer before online fine-tuning.
+- **DDPG** – Works best with curriculum stages that end in deterministic policies;
+  pair with ROS integrations for robotics control.
+- **TD3** – Select when delayed, conservative updates are required; suits
+  high-precision evaluation phases following broader exploration.
 
 Available modes:
 

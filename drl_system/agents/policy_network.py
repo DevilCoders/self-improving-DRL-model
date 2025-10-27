@@ -81,6 +81,31 @@ class ActorCritic(nn.Module):
             nn.GELU(),
             nn.Linear(last_dim, last_dim),
         )
+        self.dynamics_head = nn.Sequential(
+            nn.Linear(last_dim, last_dim),
+            nn.GELU(),
+            nn.Linear(last_dim, obs_dim),
+        )
+        self.q_head = nn.Sequential(
+            nn.Linear(last_dim, last_dim),
+            nn.ReLU(),
+            nn.Linear(last_dim, action_dim),
+        )
+        self.twin_q_head = nn.Sequential(
+            nn.Linear(last_dim, last_dim),
+            nn.ReLU(),
+            nn.Linear(last_dim, action_dim),
+        )
+        self.meta_value_head = nn.Sequential(
+            nn.Linear(last_dim, last_dim),
+            nn.GELU(),
+            nn.Linear(last_dim, 1),
+        )
+        self.behaviour_head = nn.Sequential(
+            nn.Linear(last_dim, last_dim),
+            nn.GELU(),
+            nn.Linear(last_dim, action_dim),
+        )
         self._memory_state: torch.Tensor | None = None
         self._hierarchy_trace: torch.Tensor | None = None
 
@@ -133,6 +158,11 @@ class ActorCritic(nn.Module):
         skills = self.skill_head(features)
         world_prediction = self.world_model_head(features)
         evolution_logits = self.evolution_head(features)
+        dynamics = self.dynamics_head(features)
+        q_values = self.q_head(features)
+        twin_q_values = self.twin_q_head(features)
+        meta_value = self.meta_value_head(features)
+        behaviour_prior = self.behaviour_head(features)
 
         if squeezed:
             policy_logits = policy_logits.squeeze(0)
@@ -142,6 +172,11 @@ class ActorCritic(nn.Module):
             skills = skills.squeeze(0)
             world_prediction = world_prediction.squeeze(0)
             evolution_logits = evolution_logits.squeeze(0)
+            dynamics = dynamics.squeeze(0)
+            q_values = q_values.squeeze(0)
+            twin_q_values = twin_q_values.squeeze(0)
+            meta_value = meta_value.squeeze(0)
+            behaviour_prior = behaviour_prior.squeeze(0)
             self._memory_state = self._memory_state.squeeze(0) if self._memory_state is not None else None
             hierarchy_context = hierarchy_context.squeeze(0)
             predictive_code = predictive_code.squeeze(0)
@@ -156,6 +191,11 @@ class ActorCritic(nn.Module):
             "hierarchy_context": hierarchy_context,
             "hierarchy_trace": hierarchy_tensor,
             "reflection": reflection,
+            "dynamics": dynamics,
+            "q_values": q_values,
+            "twin_q_values": twin_q_values,
+            "meta_value": meta_value,
+            "behaviour_prior": behaviour_prior,
         }
         return policy_logits, value, advantage, uncertainty, diagnostics
 
@@ -178,6 +218,11 @@ class ActorCritic(nn.Module):
                 "hierarchy_context": diagnostics["hierarchy_context"].detach(),
                 "hierarchy_trace": diagnostics["hierarchy_trace"].detach(),
                 "reflection": diagnostics["reflection"].detach(),
+                "dynamics": diagnostics["dynamics"].detach(),
+                "q_values": diagnostics["q_values"].detach(),
+                "twin_q_values": diagnostics["twin_q_values"].detach(),
+                "meta_value": diagnostics["meta_value"].detach(),
+                "behaviour_prior": diagnostics["behaviour_prior"].detach(),
             },
         )
 

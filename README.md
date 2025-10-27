@@ -13,10 +13,11 @@ automation.
 - **Policy Gradient Agents** – PPO-style actor-critic implementation with
   mixture-of-experts feature routing, cross-step memory, auxiliary
   advantage/uncertainty heads, generalized advantage estimation, and configurable
-  hyper-parameters.
-- **Agent Portfolio** – Switch between PPO, A3C, and SAC variants (or extend the
-  factory) using `SystemConfig.agent`, enabling ensemble experimentation without
-  rewriting training loops.
+  hyper-parameters. The backbone now emits dynamics, meta-value, and behaviour
+  prior diagnostics alongside twin-Q distributions.
+- **Agent Portfolio** – Switch between PPO, A3C, SAC, DQN, DDPG, and TD3 variants (or
+  extend the factory) using `SystemConfig.agent`, enabling ensemble experimentation
+  without rewriting training loops.
 - **Replay and Episodic Memory** – Experience replay plus long-term episode storage
   for meta-learning workflows.
 - **Human Feedback (RLHF)** – Queue-based feedback buffer with configurable reward
@@ -31,8 +32,8 @@ automation.
 - **Multimodal Dataset Factory** – Offline dataset generation utilities with
   automatic chunking/overlap and curated corpora spanning terminal operations,
   ethical hacking playbooks, diffusion prompts, audio transcripts, PDF briefs,
-  and multilingual codebases in CSV/TSV/TXT/JSON/JSONL, WAV, PNG, and PDF
-  formats.
+  robotics control sketches, and multilingual codebases in CSV/TSV/TXT/JSON/JSONL,
+  WAV, PNG, and PDF formats.
 - **Evolutionary Skill Heads** – Hierarchical skill, world-model, and evolution
   estimators that regularise policy updates for continual self-improvement.
 - **Training Modes** – Offline, online, parallel, distributed, curriculum, and
@@ -49,7 +50,7 @@ automation.
 
 ```
 drl_system/
-  agents/               # PPO agent and policy networks
+  agents/               # PPO/A3C/SAC/DQN/DDPG/TD3 agents and policy networks
   config.py             # Centralized dataclass configuration
   data/                 # Synthetic dataset builder
   environments/         # Multi-environment manager
@@ -102,6 +103,7 @@ under `data/<version>/multimodal/`:
 | `audio_language_corpus` | Audio + transcripts | `audio/utterance_*.wav`, `transcripts.jsonl` |
 | `technical_pdfs` | PDF briefs | `pdfs/briefing_*.pdf`, `summaries.json` |
 | `code_corpus` | Multilingual code snippets | `python/analysis_agent.py`, `cpp/control_loop.cpp`, `javascript/dashboard.js` |
+| `robotics_controls` | Control traces | `trajectories.csv`, `ros_topics.json` |
 
 Each dataset ships with a `metadata.json` manifest capturing provenance, format,
 and descriptive tags to streamline downstream loading.
@@ -135,6 +137,10 @@ Detailed guides are available in the `docs/` directory:
 - `docs/data_management.md` – Dataset generation, chunking, and offline ingestion.
 - `docs/system_management.md` – Linux/Windows automation helpers.
 - `docs/development.md` – Contribution and extension guidelines.
+- `Docs/usage.md` – Scenario-driven usage playbook.
+- `Docs/training.md` – Detailed scheduling, RLHF, and curriculum notes.
+- `Docs/datasets.md` – Dataset catalogue with chunking workflow.
+- `Docs/technology.md` – Architecture and diagnostics reference.
 - `Docs/` – Uppercase folder with printable quick-starts, agent deep dives, and
   hardware operations runbooks for teams that prefer capitalised documentation
   roots.
