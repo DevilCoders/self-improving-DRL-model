@@ -6,15 +6,27 @@ parallel or distributed rollouts using the trainer utilities.
 ## Configuring Modes
 
 ```python
+import numpy as np
 from drl_system import SystemConfig, Trainer
 
 config = SystemConfig()
 config.training.modes = ["offline", "parallel", "evaluation"]
 config.training.parallel_workers = 6
+config.agent.type = "a3c"  # Switch to asynchronous updates for heavier parallelism
 
 trainer = Trainer(config, env_factory=lambda: np.random.randn(8).astype("float32"))
 trainer.train()
 ```
+
+### Agent-Aware Scheduling
+
+Different agents shine in different modes:
+
+- **PPO** – Default for balanced offline/online curricula.
+- **A3C** – Pair with `parallel` or `distributed` modes to leverage asynchronous
+  rollouts while keeping the trainer API unchanged.
+- **SAC** – Combine with `online` exploration windows to encourage higher
+  entropy policies during discovery phases.
 
 Available modes:
 

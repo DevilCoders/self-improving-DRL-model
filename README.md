@@ -14,6 +14,9 @@ automation.
   mixture-of-experts feature routing, cross-step memory, auxiliary
   advantage/uncertainty heads, generalized advantage estimation, and configurable
   hyper-parameters.
+- **Agent Portfolio** – Switch between PPO, A3C, and SAC variants (or extend the
+  factory) using `SystemConfig.agent`, enabling ensemble experimentation without
+  rewriting training loops.
 - **Replay and Episodic Memory** – Experience replay plus long-term episode storage
   for meta-learning workflows.
 - **Human Feedback (RLHF)** – Queue-based feedback buffer with configurable reward
@@ -22,6 +25,9 @@ automation.
   unsafe actions.
 - **Tokenization Stack** – Custom tokenizer, encoder, and decoder for handling
   textual observations or instructions.
+- **Hierarchical World Model** – Transformer-enhanced actor-critic with
+  predictive coding, hierarchical latent reasoning, and reflection heads that
+  feed richer diagnostics into any supported agent.
 - **Multimodal Dataset Factory** – Offline dataset generation utilities with
   automatic chunking/overlap and curated corpora spanning terminal operations,
   ethical hacking playbooks, diffusion prompts, audio transcripts, PDF briefs,
@@ -76,6 +82,8 @@ builder.generate(num_samples=256, obs_dim=8)
 
 config.training.modes = ["offline", "parallel", "evaluation"]
 config.training.parallel_workers = 4
+config.agent.type = "sac"
+config.agent.temperature = 0.7
 
 trainer = Trainer(config, dummy_env_factory)
 trainer.train(steps=2048)
@@ -127,3 +135,6 @@ Detailed guides are available in the `docs/` directory:
 - `docs/data_management.md` – Dataset generation, chunking, and offline ingestion.
 - `docs/system_management.md` – Linux/Windows automation helpers.
 - `docs/development.md` – Contribution and extension guidelines.
+- `Docs/` – Uppercase folder with printable quick-starts, agent deep dives, and
+  hardware operations runbooks for teams that prefer capitalised documentation
+  roots.

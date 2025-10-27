@@ -4,10 +4,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Dict, Iterable, Tuple
 
+import numpy as np
 import torch
 from torch import nn, optim
 
-from ..config import MemoryConfig, PPOConfig
+from ..config import AgentConfig, MemoryConfig, PPOConfig
 from ..memory.replay_buffer import Transition
 from ..optimization.adaptive_optimizer import AdaptiveOptimizer
 from .policy_network import ActorCritic
@@ -30,12 +31,22 @@ class PPOAgent:
         memory_config: MemoryConfig,
         ppo_config: PPOConfig,
         device: torch.device,
+        agent_config: AgentConfig | None = None,
     ) -> None:
         self.device = device
-        self.model = ActorCritic(obs_dim, action_dim).to(device)
+        self.agent_config = agent_config or AgentConfig()
+        hidden_sizes = tuple(self.agent_config.hidden_sizes)
+        self.model = ActorCritic(
+            obs_dim,
+            action_dim,
+            hidden_sizes=hidden_sizes,
+            hierarchy_levels=self.agent_config.hierarchy_levels,
+            transformer_layers=self.agent_config.transformer_layers,
+        ).to(device)
         base_optimizer = optim.Adam(self.model.parameters(), lr=3e-4, eps=1e-5)
         self.optimizer = AdaptiveOptimizer(base_optimizer)
         self.ppo_config = ppo_config
+        self.temperature = max(1e-3, float(self.agent_config.temperature))
 
     def compute_advantages(
         self,
@@ -63,7 +74,24 @@ class PPOAgent:
         returns = [adv + val for adv, val in zip(advantages, values[:-1])]
         return torch.tensor(advantages, dtype=torch.float32), torch.tensor(returns, dtype=torch.float32)
 
-    def update(self, batch: PPOBatch) -> Dict[str, float]:
+    def prepare_batch(
+        self,
+        transitions: Iterable[Transition],
+        advantages: torch.Tensor,
+        returns: torch.Tensor,
+    ) -> PPOBatch:
+        observations = torch.from_numpy(np.stack([t.state for t in transitions])).float()
+        actions = torch.from_numpy(np.stack([t.action for t in transitions])).float()
+        old_log_probs = torch.tensor([t.info.get("log_prob", 0.0) for t in transitions]).float()
+        return PPOBatch(
+            observations=observations,
+            actions=actions,
+            old_log_probs=old_log_probs,
+            returns=returns.detach(),
+            advantages=advantages.detach(),
+        )
+
+    def update(self, batch: PPOBatch, **_: Dict) -> Dict[str, float]:
         for _ in range(self.ppo_config.epochs):
             (
                 logits,
@@ -72,7 +100,7 @@ class PPOAgent:
                 uncertainty,
                 diagnostics,
             ) = self.model(batch.observations.to(self.device))
-            dist = torch.distributions.Categorical(logits=logits)
+            dist = torch.distributions.Categorical(logits=logits / self.temperature)
             action_tensor = batch.actions.to(self.device).squeeze(-1)
             if action_tensor.dtype != torch.long:
                 action_tensor = action_tensor.long()

@@ -8,7 +8,9 @@ from typing import Callable, Iterable, Optional
 import numpy as np
 import torch
 
-from ..agents.ppo_agent import PPOAgent, PPOBatch
+from ..agents.base import AgentProtocol
+from ..agents.factory import create_agent
+from ..agents.ppo_agent import PPOBatch
 from ..config import SystemConfig
 from ..data.dataset_builder import SyntheticDatasetBuilder
 from ..memory.replay_buffer import ReplayBuffer, Transition
@@ -21,7 +23,7 @@ from ..utils.device import DeviceManager
 @dataclass
 class TrainingArtifacts:
     trainer: "Trainer"
-    agent: PPOAgent
+    agent: AgentProtocol
     replay_buffer: ReplayBuffer
     feedback_buffer: FeedbackBuffer
     safe_filter: SafeActionsFilter
@@ -32,14 +34,11 @@ class Trainer:
         self.config = config
         self.device_manager = DeviceManager(config.training.device)
         device = self.device_manager.select()
+        sample_obs = env_factory()
+        obs_dim = int(sample_obs.shape[0])
+        action_dim = obs_dim
         self.replay_buffer = ReplayBuffer(config.memory.capacity, config.memory.prioritized)
-        self.agent = PPOAgent(
-            obs_dim=env_factory().shape[0],
-            action_dim=env_factory().shape[0],
-            memory_config=config.memory,
-            ppo_config=config.ppo,
-            device=device,
-        )
+        self.agent = create_agent(config.agent, config, obs_dim, action_dim, device)
         self.safe_filter = SafeActionsFilter(config.safe_filter)
         self.feedback_buffer = FeedbackBuffer(config.rlhf)
         self.self_improvement = SelfImprovementLoop(config.meta_learning, self.agent.optimizer)
@@ -183,17 +182,20 @@ class Trainer:
         advantages, returns = self.agent.compute_advantages(
             transitions, self.config.memory.gamma, self.config.ppo.gae_lambda
         )
-        observations = torch.from_numpy(np.stack([t.state for t in transitions])).float()
-        actions = torch.from_numpy(np.stack([t.action for t in transitions])).float()
-        old_log_probs = torch.tensor([t.info["log_prob"] for t in transitions]).float()
-        batch = PPOBatch(
-            observations=observations,
-            actions=actions,
-            old_log_probs=old_log_probs,
-            returns=returns,
-            advantages=advantages,
-        )
-        stats = self.agent.update(batch)
+        if hasattr(self.agent, "prepare_batch"):
+            batch = self.agent.prepare_batch(transitions, advantages, returns)
+        else:
+            observations = torch.from_numpy(np.stack([t.state for t in transitions])).float()
+            actions = torch.from_numpy(np.stack([t.action for t in transitions])).float()
+            old_log_probs = torch.tensor([t.info.get("log_prob", 0.0) for t in transitions]).float()
+            batch = PPOBatch(
+                observations=observations,
+                actions=actions,
+                old_log_probs=old_log_probs,
+                returns=returns,
+                advantages=advantages,
+            )
+        stats = self.agent.update(batch, transitions=transitions, advantages=advantages, returns=returns)
         self.self_improvement.step(stats)
         return stats
 

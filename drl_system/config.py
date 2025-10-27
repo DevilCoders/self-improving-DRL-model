@@ -94,6 +94,22 @@ class MemoryConfig:
 
 
 @dataclass
+class AgentConfig:
+    """Configuration for selecting and tuning the control agent."""
+
+    type: str = "ppo"
+    hidden_sizes: List[int] = field(default_factory=default_network_hidden_sizes)
+    transformer_layers: int = 1
+    hierarchy_levels: int = 2
+    ensemble: List[str] = field(default_factory=lambda: ["ppo", "a3c", "sac"])
+    sync_factor: float = 0.9
+    n_step: int = 5
+    temperature: float = 1.0
+    sac_alpha: float = 0.2
+    soft_update_tau: float = 0.01
+
+
+@dataclass
 class PPOConfig:
     clip_range: float = 0.2
     epochs: int = 4
@@ -179,6 +195,7 @@ class SystemManagementConfig:
 
 @dataclass
 class SystemConfig:
+    agent: AgentConfig = field(default_factory=AgentConfig)
     memory: MemoryConfig = field(default_factory=MemoryConfig)
     ppo: PPOConfig = field(default_factory=PPOConfig)
     training: TrainingConfig = field(default_factory=TrainingConfig)
@@ -191,6 +208,7 @@ class SystemConfig:
 
 
 __all__ = [
+    "AgentConfig",
     "MemoryConfig",
     "PPOConfig",
     "TrainingConfig",

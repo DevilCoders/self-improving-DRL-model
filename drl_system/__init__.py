@@ -8,6 +8,9 @@ def __getattr__(name: str) -> Any:  # pragma: no cover - thin wrapper
     mapping = {
         "PPOAgent": "drl_system.agents.ppo_agent",
         "PPOBatch": "drl_system.agents.ppo_agent",
+        "A3CAgent": "drl_system.agents.a3c_agent",
+        "SACAgent": "drl_system.agents.sac_agent",
+        "create_agent": "drl_system.agents.factory",
         "SystemConfig": "drl_system.config",
         "SyntheticDatasetBuilder": "drl_system.data.dataset_builder",
         "EpisodicMemory": "drl_system.memory.replay_buffer",
@@ -30,6 +33,9 @@ def __getattr__(name: str) -> Any:  # pragma: no cover - thin wrapper
 __all__ = [
     "PPOAgent",
     "PPOBatch",
+    "A3CAgent",
+    "SACAgent",
+    "create_agent",
     "SystemConfig",
     "SyntheticDatasetBuilder",
     "EpisodicMemory",

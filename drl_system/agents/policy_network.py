@@ -15,6 +15,8 @@ class ActorCritic(nn.Module):
         hidden_sizes: Tuple[int, ...] = (256, 256),
         dropout: float = 0.1,
         use_layer_norm: bool = True,
+        hierarchy_levels: int = 2,
+        transformer_layers: int = 1,
     ) -> None:
         super().__init__()
         blocks = []
@@ -37,6 +39,28 @@ class ActorCritic(nn.Module):
         self.gating_head = nn.Linear(last_dim, len(self.experts))
         self.memory_projector = nn.Linear(last_dim * 2, last_dim)
         self.attention = nn.MultiheadAttention(last_dim, num_heads=4, batch_first=True)
+        self.context_adapter = nn.Linear(obs_dim, last_dim)
+        self.hierarchy_levels = max(1, hierarchy_levels)
+        self.hierarchical_layers = nn.ModuleList(
+            [
+                nn.Sequential(
+                    nn.Linear(last_dim, last_dim),
+                    nn.GELU(),
+                    nn.LayerNorm(last_dim),
+                )
+                for _ in range(self.hierarchy_levels)
+            ]
+        )
+        encoder_layer = nn.TransformerEncoderLayer(
+            d_model=last_dim,
+            nhead=4,
+            dim_feedforward=last_dim * 2,
+            dropout=dropout,
+            activation="gelu",
+            batch_first=True,
+        )
+        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=max(1, transformer_layers))
+        self.latent_adapter = nn.Linear(last_dim, last_dim)
         self.policy_head = nn.Sequential(nn.Linear(last_dim, last_dim), nn.GELU(), nn.Linear(last_dim, action_dim))
         self.value_head = nn.Sequential(nn.Linear(last_dim, last_dim), nn.GELU(), nn.Linear(last_dim, 1))
         self.advantage_head = nn.Sequential(nn.Linear(last_dim, last_dim), nn.GELU(), nn.Linear(last_dim, action_dim))
@@ -48,7 +72,17 @@ class ActorCritic(nn.Module):
             nn.GELU(),
             nn.Linear(last_dim, action_dim),
         )
+        self.predictive_coding_head = nn.Sequential(
+            nn.Linear(last_dim, last_dim),
+            nn.Tanh(),
+        )
+        self.reflection_head = nn.Sequential(
+            nn.Linear(last_dim, last_dim),
+            nn.GELU(),
+            nn.Linear(last_dim, last_dim),
+        )
         self._memory_state: torch.Tensor | None = None
+        self._hierarchy_trace: torch.Tensor | None = None
 
     def reset_memory(self) -> None:
         self._memory_state = None
@@ -64,6 +98,20 @@ class ActorCritic(nn.Module):
             features = block(features)
             if residual.shape[-1] == features.shape[-1]:
                 features = 0.5 * (features + residual)
+        contextual = torch.tanh(self.context_adapter(obs))
+        features = features + 0.5 * contextual
+        hierarchy_states = []
+        hierarchy_input = features
+        for layer in self.hierarchical_layers:
+            hierarchy_input = layer(hierarchy_input)
+            hierarchy_states.append(hierarchy_input)
+        hierarchy_tensor = torch.stack(hierarchy_states, dim=1)
+        transformer_output = self.transformer(hierarchy_tensor)
+        hierarchy_context = transformer_output.mean(dim=1)
+        latent_context = torch.tanh(self.latent_adapter(hierarchy_context))
+        predictive_code = self.predictive_coding_head(hierarchy_context)
+        reflection = self.reflection_head(latent_context)
+        features = features + 0.5 * latent_context + 0.1 * reflection
         expert_outputs = torch.stack([expert(features) for expert in self.experts], dim=1)
         gating = torch.softmax(self.gating_head(features), dim=-1).unsqueeze(-1)
         mixture = (expert_outputs * gating).sum(dim=1)
@@ -76,6 +124,7 @@ class ActorCritic(nn.Module):
         attended = attn_output[:, 0, :]
         features = features + attended
         self._memory_state = 0.85 * memory + 0.15 * memory_update.detach()
+        self._hierarchy_trace = hierarchy_tensor.detach()
 
         policy_logits = self.policy_head(features)
         value = self.value_head(features)
@@ -94,11 +143,19 @@ class ActorCritic(nn.Module):
             world_prediction = world_prediction.squeeze(0)
             evolution_logits = evolution_logits.squeeze(0)
             self._memory_state = self._memory_state.squeeze(0) if self._memory_state is not None else None
+            hierarchy_context = hierarchy_context.squeeze(0)
+            predictive_code = predictive_code.squeeze(0)
+            reflection = reflection.squeeze(0)
+            hierarchy_tensor = hierarchy_tensor.squeeze(0)
 
         diagnostics = {
             "skills": skills,
             "world_prediction": world_prediction,
             "evolution": evolution_logits,
+            "predictive_code": predictive_code,
+            "hierarchy_context": hierarchy_context,
+            "hierarchy_trace": hierarchy_tensor,
+            "reflection": reflection,
         }
         return policy_logits, value, advantage, uncertainty, diagnostics
 
@@ -117,6 +174,10 @@ class ActorCritic(nn.Module):
                 "skills": diagnostics["skills"].detach(),
                 "world_prediction": diagnostics["world_prediction"].detach(),
                 "evolution": diagnostics["evolution"].detach(),
+                "predictive_code": diagnostics["predictive_code"].detach(),
+                "hierarchy_context": diagnostics["hierarchy_context"].detach(),
+                "hierarchy_trace": diagnostics["hierarchy_trace"].detach(),
+                "reflection": diagnostics["reflection"].detach(),
             },
         )
 
