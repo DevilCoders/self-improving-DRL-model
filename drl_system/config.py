@@ -5,6 +5,78 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
 
+@dataclass
+class DatasetSpec:
+    """Describes a concrete dataset artefact to materialise."""
+
+    name: str
+    category: str
+    modality: str
+    formats: List[str]
+    samples: int = 128
+    description: str = ""
+    tags: Optional[List[str]] = None
+
+
+def default_dataset_specs() -> List["DatasetSpec"]:
+    return [
+        DatasetSpec(
+            name="terminal_commands",
+            category="terminal_commands",
+            modality="text",
+            formats=["csv", "tsv", "txt", "json", "jsonl"],
+            samples=160,
+            description="Cross-platform terminal automation snippets covering admin and standard user flows.",
+            tags=["linux", "windows", "automation"],
+        ),
+        DatasetSpec(
+            name="ethical_hacking_commands",
+            category="security_commands",
+            modality="text",
+            formats=["csv", "tsv", "txt", "json", "jsonl"],
+            samples=96,
+            description="Safety-filtered ethical hacking and penetration testing command references.",
+            tags=["cybersecurity", "penetration-testing", "safe"],
+        ),
+        DatasetSpec(
+            name="stable_diffusion_prompts",
+            category="stable_diffusion",
+            modality="image",
+            formats=["png", "json"],
+            samples=48,
+            description="Prompt and latent pairings suitable for seeding diffusion fine-tuning runs.",
+            tags=["computer-vision", "generative"],
+        ),
+        DatasetSpec(
+            name="audio_language_corpus",
+            category="audio_language",
+            modality="audio",
+            formats=["wav", "jsonl"],
+            samples=40,
+            description="Multi-lingual NLP/NLU/NLG audio snippets with paired transcripts.",
+            tags=["audio", "speech", "nlp"],
+        ),
+        DatasetSpec(
+            name="technical_pdfs",
+            category="pdf_knowledge",
+            modality="document",
+            formats=["pdf", "json"],
+            samples=24,
+            description="Compact PDF primers and metadata for offline policy conditioning.",
+            tags=["documentation", "reference"],
+        ),
+        DatasetSpec(
+            name="code_corpus",
+            category="code_corpus",
+            modality="code",
+            formats=["py", "cpp", "js", "json"],
+            samples=30,
+            description="Polyglot programming snippets for grounded reasoning and tool use.",
+            tags=["python", "c++", "javascript", "programming"],
+        ),
+    ]
+
+
 def default_network_hidden_sizes() -> List[int]:
     return [256, 256]
 
@@ -92,6 +164,7 @@ class DatasetConfig:
     features: Optional[List[str]] = None
     chunk_size: int = 1024
     chunk_overlap: int = 128
+    datasets: List[DatasetSpec] = field(default_factory=default_dataset_specs)
 
 
 @dataclass
@@ -125,6 +198,7 @@ __all__ = [
     "MetaLearningConfig",
     "SafeFilterConfig",
     "RLHFConfig",
+    "DatasetSpec",
     "DatasetConfig",
     "SystemManagementConfig",
     "SystemConfig",

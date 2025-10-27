@@ -48,9 +48,9 @@ class PPOAgent:
         dones = []
         for transition in transitions:
             obs = torch.from_numpy(transition.state).float().to(self.device)
-            _, value, _, _ = self.model(obs)
+            _, value, _, _, _ = self.model(obs)
             rewards.append(transition.reward)
-            values.append(value.item())
+            values.append(float(value.view(-1)[0].item()))
             dones.append(float(transition.done))
         values.append(0.0)
 
@@ -65,7 +65,13 @@ class PPOAgent:
 
     def update(self, batch: PPOBatch) -> Dict[str, float]:
         for _ in range(self.ppo_config.epochs):
-            logits, values, advantage_logits, uncertainty = self.model(batch.observations.to(self.device))
+            (
+                logits,
+                values,
+                advantage_logits,
+                uncertainty,
+                diagnostics,
+            ) = self.model(batch.observations.to(self.device))
             dist = torch.distributions.Categorical(logits=logits)
             action_tensor = batch.actions.to(self.device).squeeze(-1)
             if action_tensor.dtype != torch.long:
@@ -85,6 +91,13 @@ class PPOAgent:
             aux_target = returns.unsqueeze(-1).expand_as(advantage_logits)
             auxiliary_loss = nn.functional.mse_loss(advantage_logits, aux_target)
             uncertainty_penalty = uncertainty.mean()
+            skill_alignment_loss = nn.functional.mse_loss(diagnostics["skills"], advantage_logits.detach())
+            world_consistency_loss = nn.functional.mse_loss(
+                diagnostics["world_prediction"], batch.observations.to(self.device)
+            )
+            evolution_regulariser = nn.functional.mse_loss(
+                diagnostics["evolution"], diagnostics["skills"].detach()
+            )
 
             loss = (
                 actor_loss
@@ -92,6 +105,8 @@ class PPOAgent:
                 - self.ppo_config.entropy_coef * entropy
                 + 0.1 * auxiliary_loss
                 + 0.01 * uncertainty_penalty
+                + 0.05 * (skill_alignment_loss + world_consistency_loss)
+                + 0.02 * evolution_regulariser
             )
             self.optimizer.zero_grad()
             loss.backward()
@@ -104,6 +119,9 @@ class PPOAgent:
             "entropy": entropy.item(),
             "auxiliary_loss": auxiliary_loss.item(),
             "uncertainty": uncertainty_penalty.item(),
+            "skill_alignment_loss": skill_alignment_loss.item(),
+            "world_consistency_loss": world_consistency_loss.item(),
+            "evolution_regulariser": evolution_regulariser.item(),
         }
 
 

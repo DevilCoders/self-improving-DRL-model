@@ -11,8 +11,9 @@ automation.
 - **Self-Improvement Loop** – Adaptive optimizer wrapper and metric tracker that
   periodically checkpoints learning state.
 - **Policy Gradient Agents** – PPO-style actor-critic implementation with
-  auxiliary advantage/uncertainty heads, generalized advantage estimation, and
-  configurable hyper-parameters.
+  mixture-of-experts feature routing, cross-step memory, auxiliary
+  advantage/uncertainty heads, generalized advantage estimation, and configurable
+  hyper-parameters.
 - **Replay and Episodic Memory** – Experience replay plus long-term episode storage
   for meta-learning workflows.
 - **Human Feedback (RLHF)** – Queue-based feedback buffer with configurable reward
@@ -21,8 +22,13 @@ automation.
   unsafe actions.
 - **Tokenization Stack** – Custom tokenizer, encoder, and decoder for handling
   textual observations or instructions.
-- **Synthetic Dataset Builder** – Offline dataset generation utilities with automatic
-  chunking/overlap for CPU and GPU workflows.
+- **Multimodal Dataset Factory** – Offline dataset generation utilities with
+  automatic chunking/overlap and curated corpora spanning terminal operations,
+  ethical hacking playbooks, diffusion prompts, audio transcripts, PDF briefs,
+  and multilingual codebases in CSV/TSV/TXT/JSON/JSONL, WAV, PNG, and PDF
+  formats.
+- **Evolutionary Skill Heads** – Hierarchical skill, world-model, and evolution
+  estimators that regularise policy updates for continual self-improvement.
 - **Training Modes** – Offline, online, parallel, distributed, curriculum, and
   evaluation loops configurable via `SystemConfig.training.modes`.
 - **Multi-Environment Runner** – Async environment manager for distributed or
@@ -58,11 +64,15 @@ drl_system/
 ```python
 import numpy as np
 
-from drl_system import SystemConfig, Trainer
+from drl_system import SystemConfig, Trainer, SyntheticDatasetBuilder
 
 config = SystemConfig()
 def dummy_env_factory():
     return np.zeros(8, dtype="float32")
+
+# Materialise multimodal datasets alongside standard offline rollouts
+builder = SyntheticDatasetBuilder(config.dataset)
+builder.generate(num_samples=256, obs_dim=8)
 
 config.training.modes = ["offline", "parallel", "evaluation"]
 config.training.parallel_workers = 4
@@ -70,6 +80,23 @@ config.training.parallel_workers = 4
 trainer = Trainer(config, dummy_env_factory)
 trainer.train(steps=2048)
 ```
+
+## Multimodal Dataset Layout
+
+Running `SyntheticDatasetBuilder.generate()` now produces structured datasets
+under `data/<version>/multimodal/`:
+
+| Dataset | Modality | Key Files |
+| --- | --- | --- |
+| `terminal_commands` | Text (Linux/Windows automation) | `dataset.csv`, `dataset.tsv`, `dataset.jsonl` |
+| `ethical_hacking_commands` | Text (safe penetration testing) | `dataset.csv`, `dataset.txt` |
+| `stable_diffusion_prompts` | Image prompts | `images/sample_*.png`, `prompts.json` |
+| `audio_language_corpus` | Audio + transcripts | `audio/utterance_*.wav`, `transcripts.jsonl` |
+| `technical_pdfs` | PDF briefs | `pdfs/briefing_*.pdf`, `summaries.json` |
+| `code_corpus` | Multilingual code snippets | `python/analysis_agent.py`, `cpp/control_loop.cpp`, `javascript/dashboard.js` |
+
+Each dataset ships with a `metadata.json` manifest capturing provenance, format,
+and descriptive tags to streamline downstream loading.
 
 ## Building the C++ Example
 

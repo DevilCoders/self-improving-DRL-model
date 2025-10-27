@@ -108,6 +108,11 @@ class Trainer:
                         "entropy": float(entropy.mean().item()),
                         "value": float(value.mean().item()),
                         "uncertainty": float(extras["uncertainty"].mean().item()),
+                        "skill_activation": float(extras["skills"].mean().item()),
+                        "world_prediction_error": float(
+                            np.abs(extras["world_prediction"].detach().cpu().numpy() - obs).mean()
+                        ),
+                        "evolution": float(extras["evolution"].mean().item()),
                     },
                 )
             )
@@ -122,7 +127,13 @@ class Trainer:
         observations = [self.env_factory() for _ in range(workers)]
         for _ in range(rollout_length):
             obs_tensor = torch.from_numpy(np.stack(observations)).float().to(self.agent.device)
-            logits, values, advantage_logits, uncertainty = self.agent.model(obs_tensor)
+            (
+                logits,
+                values,
+                advantage_logits,
+                uncertainty,
+                diagnostics,
+            ) = self.agent.model(obs_tensor)
             dist = torch.distributions.Categorical(logits=logits)
             actions = dist.sample()
             log_probs = dist.log_prob(actions)
@@ -142,12 +153,22 @@ class Trainer:
                         done=done,
                         info={
                             "log_prob": float(log_probs[idx].item()),
-                            "entropy": float(entropies[idx].item()),
-                            "value": float(values[idx].mean().item()),
-                            "uncertainty": float(uncertainty[idx].mean().item()),
-                            "mode": "distributed" if distributed else "parallel",
-                        },
-                    )
+                        "entropy": float(entropies[idx].item()),
+                        "value": float(values[idx].mean().item()),
+                        "uncertainty": float(uncertainty[idx].mean().item()),
+                        "skill_activation": float(diagnostics["skills"][idx].mean().item()),
+                        "world_prediction_error": float(
+                            torch.abs(
+                                diagnostics["world_prediction"][idx].detach().cpu()
+                                - torch.from_numpy(observations[idx]).float()
+                            )
+                            .mean()
+                            .item()
+                        ),
+                        "evolution": float(diagnostics["evolution"][idx].mean().item()),
+                        "mode": "distributed" if distributed else "parallel",
+                    },
+                )
                 )
                 observations[idx] = next_obs if not done else self.env_factory()
         return transitions
