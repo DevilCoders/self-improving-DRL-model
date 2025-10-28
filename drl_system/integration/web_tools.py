@@ -101,8 +101,16 @@ class WebSessionManager:
         if not self.config.allowed_domains:
             return True
         parsed = urlparse(url)
-        hostname = parsed.hostname or ""
-        return any(hostname.endswith(domain) for domain in self.config.allowed_domains)
+        hostname = (parsed.hostname or "").lower()
+        if not hostname:
+            return False
+        for domain in self.config.allowed_domains:
+            normalized = domain.lstrip(".").lower()
+            if not normalized:
+                continue
+            if hostname == normalized or hostname.endswith("." + normalized):
+                return True
+        return False
 
     def fetch(self, url: str, timeout: float = 5.0) -> str:
         if not (self.config.enable_browsing or self.config.enable_scraping):
