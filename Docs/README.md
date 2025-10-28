@@ -8,10 +8,11 @@ both air-gapped and online environments.
 
 ## Available Guides
 
-- `agents.md` – Portfolio comparison covering PPO, A3C, SAC, DQN, DDPG, TD3, and
-  tips for extending the factory with bespoke hybrids.
+- `agents.md` – Portfolio comparison covering PPO, A3C, A2C, SAC, DQN, DDPG,
+  TD3, REINFORCE, and tips for extending the factory with bespoke hybrids.
 - `models.md` – Hierarchical actor-critic internals, diagnostic streams, and
-  checkpoints for the expanded feature heads (dynamics, meta-values, twin Qs).
+  checkpoints for the expanded feature heads (dynamics, meta-values, intrinsic
+  signals, option routing, consensus traces, twin Qs).
 - `system_operations.md` – Linux and Windows orchestration patterns, including
   admin vs. non-admin automation recipes.
 - `usage.md` – Scenario-driven quick-start matrix for picking agents and modes.

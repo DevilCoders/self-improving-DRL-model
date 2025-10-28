@@ -106,6 +106,25 @@ class ActorCritic(nn.Module):
             nn.GELU(),
             nn.Linear(last_dim, action_dim),
         )
+        self.intrinsic_head = nn.Sequential(
+            nn.Linear(last_dim, last_dim),
+            nn.GELU(),
+            nn.Linear(last_dim, 1),
+        )
+        self.option_head = nn.Sequential(
+            nn.Linear(last_dim, last_dim),
+            nn.GELU(),
+            nn.Linear(last_dim, action_dim),
+        )
+        self.consensus_head = nn.Sequential(
+            nn.Linear(last_dim, last_dim),
+            nn.Tanh(),
+        )
+        self.mode_head = nn.Sequential(
+            nn.Linear(last_dim, last_dim),
+            nn.GELU(),
+            nn.Linear(last_dim, last_dim),
+        )
         self._memory_state: torch.Tensor | None = None
         self._hierarchy_trace: torch.Tensor | None = None
 
@@ -163,6 +182,10 @@ class ActorCritic(nn.Module):
         twin_q_values = self.twin_q_head(features)
         meta_value = self.meta_value_head(features)
         behaviour_prior = self.behaviour_head(features)
+        intrinsic_signal = self.intrinsic_head(features)
+        option_logits = self.option_head(features)
+        consensus = self.consensus_head(features)
+        mode_logits = self.mode_head(features)
 
         if squeezed:
             policy_logits = policy_logits.squeeze(0)
@@ -177,6 +200,10 @@ class ActorCritic(nn.Module):
             twin_q_values = twin_q_values.squeeze(0)
             meta_value = meta_value.squeeze(0)
             behaviour_prior = behaviour_prior.squeeze(0)
+            intrinsic_signal = intrinsic_signal.squeeze(0)
+            option_logits = option_logits.squeeze(0)
+            consensus = consensus.squeeze(0)
+            mode_logits = mode_logits.squeeze(0)
             self._memory_state = self._memory_state.squeeze(0) if self._memory_state is not None else None
             hierarchy_context = hierarchy_context.squeeze(0)
             predictive_code = predictive_code.squeeze(0)
@@ -196,6 +223,10 @@ class ActorCritic(nn.Module):
             "twin_q_values": twin_q_values,
             "meta_value": meta_value,
             "behaviour_prior": behaviour_prior,
+            "intrinsic_reward": intrinsic_signal,
+            "options": option_logits,
+            "consensus": consensus,
+            "mode_logits": mode_logits,
         }
         return policy_logits, value, advantage, uncertainty, diagnostics
 

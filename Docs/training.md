@@ -18,8 +18,8 @@ The `Trainer` coordinates multiple execution phases:
 
 ## Agent-specific Notes
 
-- **PPO / A3C**: continue to rely on Generalised Advantage Estimation. Extra heads for
-  dynamics, meta-values, and behaviour priors tighten convergence when mixing offline
+- **PPO / A3C / A2C**: continue to rely on Generalised Advantage Estimation. Extra heads for
+  dynamics, meta-values, intrinsic rewards, option routing, and behaviour priors tighten convergence when mixing offline
   replays with live samples.
 - **SAC**: unchanged interface but benefits from the richer diagnostics to adapt the
   entropy temperature via RLHF signals.
@@ -31,6 +31,8 @@ The `Trainer` coordinates multiple execution phases:
 - **TD3**: delays actor updates to every `policy_delay` steps and reports critic gaps to
   surface divergence between twin heads. Pair with `training.parallel_workers > 1` to
   keep replay diversity high.
+- **REINFORCE**: Monte-Carlo baseline leverages intrinsic reward and consensus signals to
+  stabilise human-in-the-loop optimisation and lightweight research prototypes.
 
 ## Curriculum & Evaluation
 
@@ -51,5 +53,5 @@ agents because it nudges the deterministic head without destabilising the critic
 - Dataset manifests: `SyntheticDatasetBuilder.export_manifest()` produces JSON metadata
   for each dataset folder, useful for audit trails.
 - Diagnostics: the trainer returns a metrics dictionary—persist it alongside checkpoints
-  to capture `meta_value_alignment`, `behaviour_prior_alignment`, and the new
-  twin-critic statistics.
+  to capture `meta_value_alignment`, `behaviour_prior_alignment`, `intrinsic_alignment`,
+  option entropy, consensus/mode consistency, and the new twin-critic statistics.

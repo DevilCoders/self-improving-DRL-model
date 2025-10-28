@@ -110,7 +110,9 @@ class AgentConfig:
     hidden_sizes: List[int] = field(default_factory=default_network_hidden_sizes)
     transformer_layers: int = 1
     hierarchy_levels: int = 2
-    ensemble: List[str] = field(default_factory=lambda: ["ppo", "a3c", "sac", "dqn", "ddpg", "td3"])
+    ensemble: List[str] = field(
+        default_factory=lambda: ["ppo", "a3c", "a2c", "sac", "dqn", "ddpg", "td3", "reinforce"]
+    )
     sync_factor: float = 0.9
     n_step: int = 5
     temperature: float = 1.0

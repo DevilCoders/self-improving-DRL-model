@@ -13,11 +13,12 @@ automation.
 - **Policy Gradient Agents** – PPO-style actor-critic implementation with
   mixture-of-experts feature routing, cross-step memory, auxiliary
   advantage/uncertainty heads, generalized advantage estimation, and configurable
-  hyper-parameters. The backbone now emits dynamics, meta-value, and behaviour
-  prior diagnostics alongside twin-Q distributions.
-- **Agent Portfolio** – Switch between PPO, A3C, SAC, DQN, DDPG, and TD3 variants (or
-  extend the factory) using `SystemConfig.agent`, enabling ensemble experimentation
-  without rewriting training loops.
+  hyper-parameters. The backbone now emits dynamics, meta-value, behaviour prior,
+  intrinsic reward, option-routing, consensus, and mode-alignment diagnostics
+  alongside twin-Q distributions.
+- **Agent Portfolio** – Switch between PPO, A3C, A2C, SAC, DQN, DDPG, TD3, and
+  REINFORCE variants (or extend the factory) using `SystemConfig.agent`, enabling
+  ensemble experimentation without rewriting training loops.
 - **Replay and Episodic Memory** – Experience replay plus long-term episode storage
   for meta-learning workflows.
 - **Human Feedback (RLHF)** – Queue-based feedback buffer with configurable reward
@@ -34,8 +35,9 @@ automation.
   ethical hacking playbooks, diffusion prompts, audio transcripts, PDF briefs,
   robotics control sketches, and multilingual codebases in CSV/TSV/TXT/JSON/JSONL,
   WAV, PNG, and PDF formats.
-- **Evolutionary Skill Heads** – Hierarchical skill, world-model, and evolution
-  estimators that regularise policy updates for continual self-improvement.
+- **Evolutionary Skill Heads** – Hierarchical skill, world-model, evolution,
+  intrinsic, option, consensus, and mode-alignment estimators that regularise
+  policy updates for continual self-improvement.
 - **Training Modes** – Offline, online, parallel, distributed, curriculum, and
   evaluation loops configurable via `SystemConfig.training.modes`.
 - **Multi-Environment Runner** – Async environment manager for distributed or
@@ -50,7 +52,7 @@ automation.
 
 ```
 drl_system/
-  agents/               # PPO/A3C/SAC/DQN/DDPG/TD3 agents and policy networks
+  agents/               # PPO/A3C/A2C/SAC/DQN/DDPG/TD3/REINFORCE agents and policy networks
   config.py             # Centralized dataclass configuration
   data/                 # Synthetic dataset builder
   environments/         # Multi-environment manager

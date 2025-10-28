@@ -10,6 +10,13 @@ def test_agent_factory_creates_a3c():
     assert agent.__class__.__name__ == "A3CAgent"
 
 
+def test_agent_factory_creates_a2c():
+    config = SystemConfig()
+    config.agent.type = "a2c"
+    agent = create_agent(config.agent, config, obs_dim=4, action_dim=4, device=torch.device("cpu"))
+    assert agent.__class__.__name__ == "A2CAgent"
+
+
 def test_agent_factory_creates_sac():
     config = SystemConfig()
     config.agent.type = "sac"
@@ -36,6 +43,13 @@ def test_agent_factory_creates_td3():
     config.agent.type = "td3"
     agent = create_agent(config.agent, config, obs_dim=4, action_dim=4, device=torch.device("cpu"))
     assert agent.__class__.__name__ == "TD3Agent"
+
+
+def test_agent_factory_creates_reinforce():
+    config = SystemConfig()
+    config.agent.type = "reinforce"
+    agent = create_agent(config.agent, config, obs_dim=4, action_dim=4, device=torch.device("cpu"))
+    assert agent.__class__.__name__ == "ReinforceAgent"
 
 
 def test_agent_prepare_batch_shapes():

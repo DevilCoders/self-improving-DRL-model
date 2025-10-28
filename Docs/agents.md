@@ -13,10 +13,12 @@ Set `SystemConfig.agent.type` to select an agent:
 | --- | --- | --- |
 | `ppo` | Baseline proximal policy optimisation with adaptive auxiliary heads. | Stable policy-gradient experiments, curriculum learning. |
 | `a3c` | Asynchronous Advantage Actor-Critic with configurable n-step returns and global weight synchronisation. | Multi-threaded rollouts, low-latency robotics control. |
+| `a2c` | Synchronous A2C that reuses the PPO backbone without importance weighting, ideal for stable single-node experiments. | Deterministic simulators, curriculum warm-up. |
 | `sac` | Discrete-friendly Soft Actor-Critic variant with twin critics and temperature scaling. | High-entropy exploration, hybrid continuous/discrete tasks. |
 | `dqn` | Distributional DQN with twin critics, double-Q selection, and soft target updates. | Discrete automation, safety-critical command execution. |
 | `ddpg` | Deterministic policy gradients layered on the shared backbone with decaying exploration noise. | Robotic manipulation, ROS-integrated control loops. |
 | `td3` | Twin-delayed deterministic policy gradients with critic-gap monitoring. | High-precision control requiring conservative updates. |
+| `reinforce` | Monte-Carlo policy gradient with baseline leveraging the shared diagnostics for low-variance adaptation. | Rapid prototyping, human-in-the-loop shaping. |
 
 Key knobs live inside `SystemConfig.agent`:
 
@@ -52,5 +54,6 @@ Register custom agents by wrapping `create_agent` or adding new modules within
 3. `update(batch, **kwargs)` – executes gradient steps and returns metrics.
 
 The shared `ActorCritic` backbone exposes diagnostics such as predictive codes,
-hierarchy traces, and reflection vectors. Custom agents may reuse these signals
-for reward shaping, safety checks, or debugging dashboards.
+hierarchy traces, reflection vectors, intrinsic reward signals, option logits,
+and consensus/mode activations. Custom agents may reuse these signals for
+reward shaping, safety checks, or debugging dashboards.

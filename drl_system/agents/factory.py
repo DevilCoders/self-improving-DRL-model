@@ -6,10 +6,12 @@ from typing import Callable
 import torch
 
 from ..config import AgentConfig, SystemConfig
+from .a2c_agent import A2CAgent
 from .a3c_agent import A3CAgent
 from .ddpg_agent import DDPGAgent
 from .dqn_agent import DQNAgent
 from .ppo_agent import PPOAgent
+from .reinforce_agent import ReinforceAgent
 from .sac_agent import SACAgent
 from .td3_agent import TD3Agent
 
@@ -30,6 +32,8 @@ def create_agent(
         return PPOAgent(obs_dim, action_dim, config.memory, config.ppo, device, agent_config)
     if agent_type == "a3c":
         return A3CAgent(obs_dim, action_dim, config.memory, config.ppo, device, agent_config)
+    if agent_type == "a2c":
+        return A2CAgent(obs_dim, action_dim, config.memory, config.ppo, device, agent_config)
     if agent_type == "sac":
         return SACAgent(obs_dim, action_dim, config.memory, config.ppo, device, agent_config)
     if agent_type == "dqn":
@@ -38,6 +42,8 @@ def create_agent(
         return DDPGAgent(obs_dim, action_dim, config.memory, config.ppo, device, agent_config)
     if agent_type == "td3":
         return TD3Agent(obs_dim, action_dim, config.memory, config.ppo, device, agent_config)
+    if agent_type == "reinforce":
+        return ReinforceAgent(obs_dim, action_dim, config.memory, config.ppo, device, agent_config)
     raise ValueError(f"Unsupported agent type: {agent_config.type}")
 
 

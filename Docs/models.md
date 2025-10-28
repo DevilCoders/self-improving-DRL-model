@@ -19,9 +19,10 @@ representations.
 5. **Reflection Head** – Generates self-assessment vectors for meta-learning and
    safe exploration heuristics.
 
-These components feed the policy, value, advantage, evolution, dynamics, and
-twin-Q heads, so all agents—PPO, A3C, SAC, DQN, DDPG, TD3, or custom—benefit
-without additional wiring.
+These components feed the policy, value, advantage, evolution, dynamics, twin-Q,
+intrinsic, option, consensus, and mode-alignment heads, so all
+agents—PPO, A3C, A2C, SAC, DQN, DDPG, TD3, REINFORCE, or custom—benefit without
+additional wiring.
 
 ## Diagnostics
 
@@ -36,6 +37,10 @@ signals in the diagnostics map:
 - `q_values` / `twin_q_values`: Distributional Q estimates powering DQN/DDPG/TD3.
 - `meta_value`: Meta-critic output guiding curriculum schedulers.
 - `behaviour_prior`: Behaviour cloning prior for safety filters and RLHF alignment.
+- `intrinsic_reward`: Adaptive intrinsic signal used for curiosity-driven agents.
+- `options`: Latent option logits enabling mixture-of-policy behaviours.
+- `consensus`: Agreement vector aligning self-improvement and safety filters.
+- `mode_logits`: Representation-matching activations for curriculum balancing.
 
 ```python
 import torch

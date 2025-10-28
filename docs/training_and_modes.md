@@ -25,6 +25,9 @@ Different agents shine in different modes:
 - **PPO** – Default for balanced offline/online curricula.
 - **A3C** – Pair with `parallel` or `distributed` modes to leverage asynchronous
   rollouts while keeping the trainer API unchanged.
+- **A2C** – Choose for synchronous, latency-sensitive experiments that still
+  benefit from the shared diagnostics without the overhead of importance
+  sampling.
 - **SAC** – Combine with `online` exploration windows to encourage higher
   entropy policies during discovery phases.
 - **DQN** – Excellent for discrete automation in `offline` or hybrid schedules where
@@ -33,6 +36,9 @@ Different agents shine in different modes:
   pair with ROS integrations for robotics control.
 - **TD3** – Select when delayed, conservative updates are required; suits
   high-precision evaluation phases following broader exploration.
+- **REINFORCE** – Useful for rapid prototyping and RLHF-heavy loops where the
+  Monte-Carlo objective integrates human scores directly alongside intrinsic
+  rewards emitted by the backbone.
 
 Available modes:
 

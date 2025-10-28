@@ -127,6 +127,17 @@ class PPOAgent:
             evolution_regulariser = nn.functional.mse_loss(
                 diagnostics["evolution"], diagnostics["skills"].detach()
             )
+            intrinsic_alignment = nn.functional.mse_loss(
+                diagnostics["intrinsic_reward"], returns.unsqueeze(-1)
+            )
+            option_dist = torch.distributions.Categorical(logits=diagnostics["options"])
+            option_entropy = option_dist.entropy().mean()
+            consensus_alignment = nn.functional.mse_loss(
+                diagnostics["consensus"], diagnostics["behaviour_prior"].detach()
+            )
+            mode_consistency = nn.functional.mse_loss(
+                diagnostics["mode_logits"], diagnostics["hierarchy_context"].detach()
+            )
 
             loss = (
                 actor_loss
@@ -139,6 +150,10 @@ class PPOAgent:
                 + 0.05 * nn.functional.mse_loss(diagnostics["dynamics"], batch.observations.to(self.device))
                 + 0.02 * nn.functional.mse_loss(diagnostics["meta_value"], returns.unsqueeze(-1))
                 + 0.01 * nn.functional.mse_loss(diagnostics["behaviour_prior"], advantage_logits.detach())
+                + 0.01 * intrinsic_alignment
+                + 0.02 * consensus_alignment
+                + 0.02 * mode_consistency
+                - 0.005 * option_entropy
             )
             self.optimizer.zero_grad()
             loss.backward()
@@ -163,6 +178,10 @@ class PPOAgent:
             "behaviour_prior_alignment": nn.functional.mse_loss(
                 diagnostics["behaviour_prior"], advantage_logits.detach()
             ).item(),
+            "intrinsic_alignment": intrinsic_alignment.item(),
+            "option_entropy": option_entropy.item(),
+            "consensus_alignment": consensus_alignment.item(),
+            "mode_consistency": mode_consistency.item(),
         }
 
 
