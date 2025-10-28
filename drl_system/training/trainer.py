@@ -95,11 +95,11 @@ class Trainer:
             next_obs = self.env_factory()  # placeholder for real environment interaction
             reward = float(np.random.randn())
             done = bool(np.random.rand() < 0.05)
-                transitions.append(
-                    Transition(
-                        state=obs,
-                        action=filtered_action,
-                        reward=reward,
+            transitions.append(
+                Transition(
+                    state=obs,
+                    action=filtered_action,
+                    reward=reward,
                     next_state=next_obs,
                     done=done,
                     info={
