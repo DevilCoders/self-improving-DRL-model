@@ -39,3 +39,5 @@ def test_web_session_manager_domain_filters_and_history():
     assert sorted(payloads) == sorted([f"payload:{url}" for url in urls])
     assert manager.history() == urls
     assert not manager.is_domain_allowed("https://forbidden.org")
+    assert manager.is_domain_allowed("https://sub.example.com/page")
+    assert not manager.is_domain_allowed("https://malicious-example.com")

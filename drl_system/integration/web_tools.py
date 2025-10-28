@@ -101,11 +101,11 @@ class WebSessionManager:
         if not self.config.allowed_domains:
             return True
         parsed = urlparse(url)
-        hostname = (parsed.hostname or "").lower()
+        hostname = (parsed.hostname or "").rstrip(".").lower()
         if not hostname:
             return False
         for domain in self.config.allowed_domains:
-            normalized = domain.lstrip(".").lower()
+            normalized = domain.strip().lstrip(".").rstrip(".").lower()
             if not normalized:
                 continue
             if hostname == normalized or hostname.endswith("." + normalized):
