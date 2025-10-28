@@ -26,6 +26,12 @@ robotics integrations.
 - **ROS & Hardware Hooks** – ROS 2 adapter and Raspberry Pi / Arduino controller
   abstractions for real-world deployment.
 - **C++ Integration** – Minimal ROS bridge example (see `cpp/` directory).
+- **Deliberation Engine** – Extensive, deep, and extended thinking traces for
+  analyzing agent reasoning.
+- **Web Tools** – Lightweight browsing and scraping helpers with domain-aware
+  safeguards.
+- **Multi-Task Scheduler** – Threaded task orchestrator for concurrent data
+  processing or analysis workloads.
 
 ## Project Layout
 

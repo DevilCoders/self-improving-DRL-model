@@ -11,7 +11,9 @@ from ..agents.ppo_agent import PPOAgent, PPOBatch
 from ..config import SystemConfig
 from ..memory.replay_buffer import ReplayBuffer, Transition
 from ..safety.safe_filter import SafeActionsFilter
+from ..runners.multitask_runner import MultiTaskScheduler
 from ..self_improvement.self_evaluator import SelfImprovementLoop
+from ..self_improvement.thinking import DeliberationEngine
 from ..training.rlhf import FeedbackBuffer, HumanFeedback, aggregate_feedback
 from ..utils.device import DeviceManager
 
@@ -41,10 +43,13 @@ class Trainer:
         self.safe_filter = SafeActionsFilter(config.safe_filter)
         self.feedback_buffer = FeedbackBuffer(config.rlhf)
         self.self_improvement = SelfImprovementLoop(config.meta_learning, self.agent.optimizer)
+        self.deliberation_engine = DeliberationEngine(config.thinking)
+        self.scheduler = MultiTaskScheduler(max_workers=config.concurrency.max_workers)
         self.env_factory = env_factory
 
     def collect_rollout(self, rollout_length: int) -> list[Transition]:
         transitions = []
+        trace = self.deliberation_engine.start_trace("rollout", mode="extensive")
         obs = self.env_factory()
         for _ in range(rollout_length):
             obs_tensor = torch.from_numpy(obs).float()
@@ -64,9 +69,20 @@ class Trainer:
                     info={"log_prob": log_prob.item(), "entropy": entropy.mean().item(), "value": value.mean().item()},
                 )
             )
+            self.deliberation_engine.add_step(
+                trace.trace_id,
+                f"step reward={reward:.4f} entropy={entropy.mean().item():.4f}",
+                done=done,
+            )
             obs = next_obs
             if done:
                 obs = self.env_factory()
+        if self.config.thinking.auto_summarize:
+            self.scheduler.schedule(
+                self.deliberation_engine.summarize,
+                trace.trace_id,
+                description="summarize_rollout",
+            )
         return transitions
 
     def integrate_feedback(self, feedback: Iterable[HumanFeedback]) -> float:
@@ -91,6 +107,12 @@ class Trainer:
         )
         stats = self.agent.update(batch)
         self.self_improvement.step(stats)
+        if self.config.concurrency.track_metrics:
+            self.scheduler.schedule(
+                self.deliberation_engine.record_metrics,
+                stats,
+                description="record_update_metrics",
+            )
         return stats
 
     def train(self, steps: Optional[int] = None) -> None:
@@ -105,6 +127,10 @@ class Trainer:
                 self.integrate_feedback(human_feedback)
             if step % self.config.training.save_interval == 0:
                 self.self_improvement.checkpoint(step, stats)
+            self.scheduler.gather(timeout=self.config.concurrency.gather_timeout)
+
+    def shutdown(self) -> None:
+        self.scheduler.shutdown()
 
 
 __all__ = ["Trainer", "TrainingArtifacts"]
