@@ -81,6 +81,33 @@ class DatasetConfig:
 
 
 @dataclass
+class ThinkingConfig:
+    enable: bool = True
+    default_mode: str = "extensive"
+    modes: List[str] = field(
+        default_factory=lambda: ["thinking", "extensive", "deep", "extended"]
+    )
+    max_steps: int = 128
+    auto_summarize: bool = True
+
+
+@dataclass
+class WebToolsConfig:
+    enable_browsing: bool = True
+    enable_scraping: bool = True
+    allowed_domains: Optional[List[str]] = None
+    user_agent: str = "SelfImprovingDRL/1.0"
+    max_concurrent_requests: int = 4
+
+
+@dataclass
+class ConcurrencyConfig:
+    max_workers: int = 4
+    gather_timeout: float = 0.0
+    track_metrics: bool = True
+
+
+@dataclass
 class SystemConfig:
     memory: MemoryConfig = field(default_factory=MemoryConfig)
     ppo: PPOConfig = field(default_factory=PPOConfig)
@@ -90,6 +117,9 @@ class SystemConfig:
     safe_filter: SafeFilterConfig = field(default_factory=SafeFilterConfig)
     rlhf: RLHFConfig = field(default_factory=RLHFConfig)
     dataset: DatasetConfig = field(default_factory=DatasetConfig)
+    thinking: ThinkingConfig = field(default_factory=ThinkingConfig)
+    web_tools: WebToolsConfig = field(default_factory=WebToolsConfig)
+    concurrency: ConcurrencyConfig = field(default_factory=ConcurrencyConfig)
 
 
 __all__ = [
@@ -101,5 +131,8 @@ __all__ = [
     "SafeFilterConfig",
     "RLHFConfig",
     "DatasetConfig",
+    "ThinkingConfig",
+    "WebToolsConfig",
+    "ConcurrencyConfig",
     "SystemConfig",
 ]

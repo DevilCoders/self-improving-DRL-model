@@ -18,6 +18,13 @@ def __getattr__(name: str) -> Any:  # pragma: no cover - thin wrapper
         "SequenceEncoder": "drl_system.tokenization.encoder",
         "SequenceDecoder": "drl_system.tokenization.decoder",
         "Trainer": "drl_system.training.trainer",
+        "DeliberationEngine": "drl_system.self_improvement.thinking",
+        "DeliberationTrace": "drl_system.self_improvement.thinking",
+        "DeliberationStep": "drl_system.self_improvement.thinking",
+        "WebScraper": "drl_system.integration.web_tools",
+        "WebSessionManager": "drl_system.integration.web_tools",
+        "MultiTaskScheduler": "drl_system.runners.multitask_runner",
+        "ScheduledResult": "drl_system.runners.multitask_runner",
     }
     if name not in mapping:
         raise AttributeError(name)
@@ -38,4 +45,11 @@ __all__ = [
     "SequenceEncoder",
     "SequenceDecoder",
     "Trainer",
+    "DeliberationEngine",
+    "DeliberationTrace",
+    "DeliberationStep",
+    "WebScraper",
+    "WebSessionManager",
+    "MultiTaskScheduler",
+    "ScheduledResult",
 ]
